@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Reminder App</string>
+    <string-array name="category">
+        <item>Default</item>
+        <item>Finished</item>
+    </string-array>
 </resources>
