@@ -5,22 +5,28 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class TaskDisplay extends RecyclerView.Adapter<TaskDisplay.Viewholder> {
+public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewholder> implements Filterable {
     Context context;
-    List<String> tasks;
+    List<String> allList;
+    List<String> allTaskList;
 
     private OnTaskListener listener;
-    public TaskDisplay(Context context, List<String> allList, OnTaskListener listener) {
+    public RecyclerAdapter(Context context, List<String> allList, OnTaskListener listener) {
         this.context = context;
-        this.tasks = allList;
+        this.allList = allList;
         this.listener = listener;
+        allTaskList = new ArrayList<>(allList);
     }
 
     @NonNull
@@ -33,13 +39,48 @@ public class TaskDisplay extends RecyclerView.Adapter<TaskDisplay.Viewholder> {
 
     @Override
     public void onBindViewHolder(@NonNull Viewholder holder, int position) {
-        holder.task.setText(""+tasks.get(position));
+        holder.task.setText(""+allList.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return tasks.size();
+        return allList.size();
     }
+
+    @Override
+    public Filter getFilter() {
+        return filter;
+    }
+
+    Filter filter = new Filter() {
+        //Runs on background Thread
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<String> filteredList = new ArrayList<>();
+            if(constraint.toString().isEmpty()){
+                filteredList.addAll(allTaskList);
+            }
+            else{
+                for (String filteredItem: allTaskList) {
+                    if(filteredItem.toLowerCase().contains(constraint.toString().toLowerCase())){
+                        filteredList.add(filteredItem);
+                    }
+                }
+            }
+
+            FilterResults filterResults = new FilterResults();
+            filterResults.values = filteredList;
+            return filterResults;
+        }
+
+        //Runs on UI Thread
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            allList.clear();
+            allList.addAll((Collection<? extends String>) results.values);
+            notifyDataSetChanged();
+        }
+    };
 
     class Viewholder extends RecyclerView.ViewHolder {
         TextView task;
