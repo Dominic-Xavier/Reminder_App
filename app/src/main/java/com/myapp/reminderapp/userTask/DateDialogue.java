@@ -1,4 +1,4 @@
-package com.myapp.reminderapp;
+package com.myapp.reminderapp.userTask;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;

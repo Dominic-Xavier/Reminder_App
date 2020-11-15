@@ -1,10 +1,9 @@
-package com.myapp.reminderapp;
+package com.myapp.reminderapp.userTask;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.content.DialogInterface;
@@ -19,8 +18,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.sql.sql;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,12 +67,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
 
         categoryList = new ArrayList<>();
         categoryList.add("Default");
-        categoryList.add("Finished");
         categoryList.add("Add New Category");
+        categoryList.add("Finished");
 
-        ArrayAdapter<String> category = new ArrayAdapter<String>(MainActivity.this,
+       ArrayAdapter<String> category = new ArrayAdapter<String>(MainActivity.this,
                 R.layout.spinner_text, categoryList);
-        category.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(category);
         spinner.setOnItemSelectedListener(this);
     }
@@ -120,19 +121,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
             layout.addView(editText);
             AlertDialog.Builder builder = new AlertDialog.Builder(this)
                     .setMessage("Category name")
-                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+                    .setPositiveButton("ok", (DialogInterface dialog, int which)-> {
                             String categoryName = editText.getText().toString();
                             categoryList.add(categoryName);
+                            category_name = ""+parent.getItemAtPosition(categoryList.size()-1);
                             layout.removeAllViews();
-                        }
                     })
-                    .setNegativeButton("Calcel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+                    .setNegativeButton("Calcel", (dialog, which)-> {
                             layout.removeAllViews();
-                        }
                     });
             al = builder.create();
             al.setView(layout);

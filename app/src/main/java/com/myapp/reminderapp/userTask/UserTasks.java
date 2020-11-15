@@ -1,4 +1,4 @@
-package com.myapp.reminderapp;
+package com.myapp.reminderapp.userTask;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -9,8 +9,10 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
+
+import com.myapp.reminderapp.R;
+
 import java.text.DateFormat;
 import java.util.Calendar;
 

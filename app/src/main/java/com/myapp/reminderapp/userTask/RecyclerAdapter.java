@@ -1,4 +1,4 @@
-package com.myapp.reminderapp;
+package com.myapp.reminderapp.userTask;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,9 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.myapp.reminderapp.R;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,6 +43,16 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
     @Override
     public void onBindViewHolder(@NonNull Viewholder holder, int position) {
         holder.task.setText(""+allList.get(position));
+        holder.check.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(holder.check.isChecked()){
+                    allList.remove(position);
+                    notifyItemRemoved(position);
+                    notifyItemRangeRemoved(position,allList.size());
+                }
+            }
+        });
     }
 
     @Override
@@ -100,7 +113,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
     }
 
     @FunctionalInterface
-    interface OnTaskListener{
+    public interface OnTaskListener{
         void onClick(int position);
     }
 }
