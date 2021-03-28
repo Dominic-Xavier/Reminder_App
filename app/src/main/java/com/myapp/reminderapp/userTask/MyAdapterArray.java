@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.alertORToast.AlertOrToast;
 import com.myapp.reminderapp.sql.sql;
 
 import androidx.annotation.NonNull;
@@ -42,7 +43,7 @@ public class MyAdapterArray extends ArrayAdapter<String> {
         label = row.findViewById(R.id.spinner_text);
         label.setText(string[position]);
         if(label.getText().toString().contains("Default")){
-            new sql(context).showAlert("Success","Done");
+            new AlertOrToast(context).showAlert("Success","Done");
         }
         return row;
     }

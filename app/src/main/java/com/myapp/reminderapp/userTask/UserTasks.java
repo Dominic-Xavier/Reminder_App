@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.sql.sql;
 
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -67,7 +68,12 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
             if(remind_date.isEmpty() || remind_time.isEmpty())
                 Toast.makeText(this,"Please fill date and time",Toast.LENGTH_SHORT).show();
             else{
-                //Do Something
+                String Task = task_name.getText().toString();
+                String dateRemind = date.getText().toString();
+                String timeRemind = time.getText().toString();
+                String category = new MainActivity().getCategory_name();
+                new sql(this).addData(category,Task,dateRemind,timeRemind);
+                //new sql(this).addData(new MainActivity().getCategory_name(), Task, dateRemind, timeRemind);
             }
         });
     }
@@ -86,6 +92,4 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
     public void onBackPressed() {
         finish();
     }
-
-
 }

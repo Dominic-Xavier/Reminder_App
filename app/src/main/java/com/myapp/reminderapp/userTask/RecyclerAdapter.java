@@ -43,15 +43,13 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
     @Override
     public void onBindViewHolder(@NonNull Viewholder holder, int position) {
         holder.task.setText(""+allList.get(position));
-        holder.check.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        holder.check.setOnClickListener((v)-> {
                 if(holder.check.isChecked()){
                     allList.remove(position);
                     notifyItemRemoved(position);
                     notifyItemRangeRemoved(position,allList.size());
+                    String sqla = "detete from ";
                 }
-            }
         });
     }
 
