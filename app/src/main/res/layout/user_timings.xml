@@ -83,39 +83,34 @@
         android:text="Save"
         android:textColor="@color/White"
         android:textSize="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayoutCompat"
+        app:layout_constraintBottom_toTopOf="@+id/text_receive"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/time"/>
+        app:layout_constraintTop_toBottomOf="@+id/time" />
 
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/linearLayoutCompat"
-        android:layout_width="match_parent"
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/text_receive"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:hint="Update Task"
+        android:layout_marginRight="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <EditText
-            android:id="@+id/text_receive"
-            android:layout_width="450dp"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:hint="Update Task"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
 
-        <ImageButton
-            android:id="@+id/update_task"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:background="@color/colorAccent"
-            android:src="@mipmap/baseline_send_white_18dp" />
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    <ImageButton
+        android:id="@+id/update_task"
+        android:layout_width="36dp"
+        android:layout_height="43dp"
+        android:layout_marginRight="10dp"
+        android:background="@drawable/round_button"
+        android:src="@mipmap/baseline_send_white_18dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/text_receive"
+        app:layout_constraintStart_toEndOf="@+id/text_receive"
+        app:layout_constraintTop_toTopOf="@+id/text_receive" />
 
     <include
         android:id="@+id/include"

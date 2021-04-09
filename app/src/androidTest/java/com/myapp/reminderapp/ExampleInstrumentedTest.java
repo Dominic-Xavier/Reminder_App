@@ -1,33 +1,31 @@
 package com.myapp.reminderapp;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.myapp.reminderapp.sql.sql;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 /**
  * Instrumented test, which will execute on an Android device.
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-@RunWith(AndroidJUnit4.class)
-public class ExampleInstrumentedTest {
-    @Test()
-    public void useAppContext() {
-        // Context of the app under test.
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.myapp.reminderapp", appContext.getPackageName());
-    }
 
+public class ExampleInstrumentedTest {
     @Test
-    public void insert_data(){
-        new sql(InstrumentationRegistry.getInstrumentation().getTargetContext()).showAlert("set","dsf");
+    public void show(){
+        sql s = new sql(InstrumentationRegistry.getInstrumentation().getTargetContext());
+        Map<String, Set<String>> map = s.allDatas();
+        System.out.println(map);
+        Log.v("Map Object", String.valueOf(map));
     }
 }

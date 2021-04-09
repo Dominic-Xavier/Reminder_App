@@ -4,4 +4,5 @@
         <item>Default</item>
         <item>Finished</item>
     </string-array>
+    <string name="search_hint">Search Tasks</string>
 </resources>

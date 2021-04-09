@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.alertORToast.AlertOrToast;
 import com.myapp.reminderapp.sql.sql;
 
 import java.text.DateFormat;
@@ -26,6 +27,7 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
     Button save;
     TextView task_name;
     int hour, minutes;
+    sql s = new sql(this);
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +39,9 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
         save = findViewById(R.id.save);
         task_name = findViewById(R.id.task_Display);
         Intent task = getIntent();
-        String tasks = task.getStringExtra("Key");
+        String tasks = task.getStringExtra("Task");
+        String categoryName = task.getStringExtra("CategoryName");
+        new AlertOrToast(this).toastMessage("Category Name:"+categoryName);
 
         task_name.setText(tasks);
 
@@ -71,9 +75,8 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
                 String Task = task_name.getText().toString();
                 String dateRemind = date.getText().toString();
                 String timeRemind = time.getText().toString();
-                String category = new MainActivity().getCategory_name();
-                new sql(this).addData(category,Task,dateRemind,timeRemind);
-                //new sql(this).addData(new MainActivity().getCategory_name(), Task, dateRemind, timeRemind);
+                String tableName = s.getTableName(categoryName);
+                s.updateData(tableName,Task,dateRemind,timeRemind);
             }
         });
     }

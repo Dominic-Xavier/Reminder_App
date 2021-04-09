@@ -1,6 +1,5 @@
 package com.myapp.reminderapp.userTask;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -11,12 +10,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
-import android.hardware.camera2.params.StreamConfigurationMap;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,14 +24,18 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.myapp.reminderapp.R;
 import com.myapp.reminderapp.alertORToast.AlertOrToast;
 import com.myapp.reminderapp.sql.sql;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements RecyclerAdapter.OnTaskListener, AdapterView.OnItemSelectedListener {
 
@@ -47,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     List<String> categoryList;
     sql s = new sql(this);
     static int positions;
+    Handler handler;
+    static List<String> Tasks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,37 +66,34 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         setSupportActionBar(toolbar);
         toolbar.showOverflowMenu();
 
-        /*Handler handler = new Handler();
-        handler.postAtFrontOfQueue(new Runnable() {
-            @Override
-            public void run() {
-                List<String> l = s.getTasks();
-                recyclerAdapter = new RecyclerAdapter(MainActivity.this,l,MainActivity.this);
-                toDoList.setAdapter(recyclerAdapter);
-                toDoList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-            }
-        });*/
+        handler = new Handler();
+        handler.postAtFrontOfQueue(()-> {
+            List<String>ls = s.getCategory();
+            categoryList.clear();
+            categoryList.add("Select");
+            categoryList.add("Add New Category");
+            for(String a:ls)
+                categoryList.add(a);
+        });
 
         send.setOnClickListener((View v)-> {
                 String userTask = task.getText().toString();
-                if(userTask.isEmpty())
-                    new AlertOrToast(this).toastMessage("Task cannot be empty");
+                if(userTask.isEmpty() || category_name.equals("Select"))
+                    new AlertOrToast(this).toastMessage("Task is Empty or Category is not selected...!");
                 else {
-                    s.addData(category_name,userTask);
+                    String tableIdName = s.getTableName(category_name);
+                    s.addData(tableIdName,userTask);
                     allList.add(userTask);
                     task.setText("");
-                    recyclerAdapter = new RecyclerAdapter(MainActivity.this,allList,this);
-                    toDoList.setAdapter(recyclerAdapter);
-                    toDoList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+                    setRecyclerAdapter(MainActivity.this,allList,this);
                 }
             });
         categoryList = new ArrayList<>();
-        categoryList.add("Default");
+        categoryList.add("Select");
         categoryList.add("Add New Category");
-        categoryList.add("Finished");
 
        ArrayAdapter<String> category = new ArrayAdapter<String>(MainActivity.this,
-                R.layout.spinner_text, categoryList);
+                R.layout.spinner_text_view, categoryList);
         spinner.setAdapter(category);
         spinner.setOnItemSelectedListener(this);
     }
@@ -102,9 +103,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         positions = position;
         String result = allList.get(positions);
         Intent intent = new Intent(this, UserTasks.class);
-        intent.putExtra("Key",result);
+        intent.putExtra("Task",result);
         intent.putExtra("indexPosition",positions);
-
+        intent.putExtra("CategoryName",getCategory_name());
         startActivity(intent);
         new AlertOrToast(this).toastMessage(intent.getStringExtra("Key"));
     }
@@ -136,11 +137,16 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         return category_name;
     }
 
+    public void setCategory_name(String category_name){
+        this.category_name = category_name;
+    }
+
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         AlertDialog al;
         //category_name is taken as table name
         category_name = "" + parent.getItemAtPosition(position);
+        setCategory_name(category_name);
         if (category_name.equals("Add New Category")) {
             LinearLayout layout = new LinearLayout(this);
             EditText editText = this.categoryName();
@@ -151,19 +157,28 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
                     .setPositiveButton("ok", (DialogInterface dialog, int which) -> {
                         //categoryName is Table Name
                         String categoryName = editText.getText().toString();
-                        List<String> ls = s.addCategory(categoryName);
+                        List<String>ls = s.addCategory(categoryName);
+                        categoryList.clear();
+                        categoryList.add("Select");
+                        categoryList.add("Add New Category");
                         for (String l:ls)
                             categoryList.add(l);
                         layout.removeAllViews();
                     })
                     .setNegativeButton("Calcel", (dialog, which) -> {
                         layout.removeAllViews();
+                        dialog.dismiss();
                     });
             al = builder.create();
             al.setView(layout);
             al.setCancelable(false);
             al.setCanceledOnTouchOutside(false);
             al.show();
+        }
+        else if(!category_name.equals("Select")){
+            String tablename = s.getTableName(category_name);
+            allList = s.getAllTasks(tablename);
+            setRecyclerAdapter(MainActivity.this, allList,this);
         }
     }
 
@@ -175,7 +190,23 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     public EditText categoryName(){
         EditText et = new EditText(this);
         et.setHint("Category Name");
-        et.setTextSize(15);
+        et.setTextSize(20);
         return et;
+    }
+
+    public TextView emptyText(Context context){
+        TextView tv = new TextView(context);
+        tv.setText("No Results");
+        tv.setTypeface(null,Typeface.BOLD);
+        tv.setTextColor(Color.WHITE);
+        tv.setTextSize(20);
+        tv.setGravity(Gravity.CENTER);
+        return tv;
+    }
+
+    public static void setRecyclerAdapter(Context context, List<String> allTasks, RecyclerAdapter.OnTaskListener listener){
+        recyclerAdapter = new RecyclerAdapter(context,allTasks,listener);
+        toDoList.setAdapter(recyclerAdapter);
+        toDoList.setLayoutManager(new LinearLayoutManager(context));
     }
 }
