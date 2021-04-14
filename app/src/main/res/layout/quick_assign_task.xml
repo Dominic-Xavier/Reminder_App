@@ -33,16 +33,26 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/displayTask"
-        android:layout_width="match_parent"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swiperefresh"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/task"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/custom_menu_toolBar"
-        app:layout_constraintBottom_toTopOf="@+id/task"/>
+        tools:ignore="MissingConstraints">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/displayTask"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            tools:ignore="MissingConstraints" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
 
 
     <androidx.appcompat.widget.AppCompatEditText
@@ -61,12 +71,12 @@
         android:id="@+id/send"
         android:layout_width="37dp"
         android:layout_height="0dp"
+        android:layout_marginRight="8dp"
         android:background="@drawable/round_button"
         android:src="@mipmap/baseline_send_white_18dp"
-        android:layout_marginRight="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/task"
-        app:layout_constraintTop_toBottomOf="@+id/displayTask" />
+        app:layout_constraintTop_toBottomOf="@+id/swiperefresh" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

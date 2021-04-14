@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -20,6 +21,7 @@ import com.myapp.reminderapp.alertORToast.AlertOrToast;
 import com.myapp.reminderapp.sql.Sql;
 
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import androidx.annotation.Nullable;
@@ -29,6 +31,7 @@ import androidx.fragment.app.DialogFragment;
 public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnDateSetListener, AdapterView.OnItemSelectedListener {
 
     EditText date,time,taskName;
+    ImageButton update_Task;
     Button save;
     TextView task_name;
     Spinner spinner;
@@ -46,6 +49,7 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
         taskName = findViewById(R.id.text_receive);
         save = findViewById(R.id.save);
         task_name = findViewById(R.id.task_Display);
+        update_Task = findViewById(R.id.update_task);
         spinner = findViewById(R.id.repeat);
         Intent task = getIntent();
         String tasks = task.getStringExtra("Task");
@@ -53,6 +57,20 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
         new AlertOrToast(this).toastMessage("Category Name:"+categoryName);
 
         task_name.setText(tasks);
+
+        update_Task.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String id = s.getTableName(categoryName);
+                String updateTask = taskName.getText().toString();
+                String taskNames = task_name.getText().toString();
+                int save = s.updateTask(id,taskNames,updateTask);
+                if(save>0){
+                    task_name.setText(updateTask);
+                    taskName.setText("");
+                }
+            }
+        });
 
         String repeat[] = getResources().getStringArray(R.array.Repeat_Array);
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(UserTasks.this,R.layout.spinner_text,repeat);
@@ -71,15 +89,12 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
 
                 }
             },12,0,false);*/
-            TimePickerDialog dialog = new TimePickerDialog(
-                    UserTasks.this,
+            TimePickerDialog dialog = new TimePickerDialog(UserTasks.this,
                     (view,hourOfDay, minute) ->{
                             hour = hourOfDay;
                             minutes = minute;
-                            Calendar calendar =  Calendar.getInstance();
-                            calendar.set(0,0,0,hour,minutes);
-                            time.setText(android.text.format.DateFormat.format("H:MM", calendar));
-                    },12,0,false);
+                            time.setText(hour+":"+minutes);
+                    },hour,minutes,false);
             dialog.updateTime(hour,minutes);
             dialog.show();
         });
@@ -112,8 +127,9 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, month);
-        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        String currentDate = DateFormat.getDateInstance(DateFormat.SHORT).format(calendar.getTime());
+        calendar.set(Calendar.DATE, dayOfMonth);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/YY");
+        String currentDate = dateFormat.format(calendar.getTime());
         date.setText(currentDate);
     }
 

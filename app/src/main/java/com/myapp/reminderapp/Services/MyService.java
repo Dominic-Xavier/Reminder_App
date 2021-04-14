@@ -6,6 +6,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 
 import com.myapp.reminderapp.alertORToast.AlertOrToast;
@@ -15,10 +16,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Set;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 public class MyService extends Service {
 
@@ -34,7 +38,7 @@ public class MyService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return binder;
+        return null;
     }
 
     @Override
@@ -64,7 +68,14 @@ public class MyService extends Service {
         super.onCreate();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void setAlarm(int year, int month, int date, int hour, int min){
+        DateTimeFormatter dtf = null;
+        LocalDateTime now = null;
+        dtf = DateTimeFormatter.ofPattern("MM/dd/YY HH:mm");
+        now = LocalDateTime.now();
+        String dates = dtf.format(now);
+        
         Calendar milliSeconds = Calendar.getInstance();
         milliSeconds.setTimeInMillis(System.currentTimeMillis());
         milliSeconds.set(year,month,date,hour,min);
@@ -74,5 +85,7 @@ public class MyService extends Service {
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,milliSeconds.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES,pendingIntent);
     }
 
-
+    public void decodeJsonArray(JSONArray jsonArray){
+        
+    }
 }

@@ -6,6 +6,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.app.AlarmManager;
 import android.content.Context;
@@ -13,6 +14,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -51,13 +53,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     Sql s = new Sql(this);
     static int positions;
     Handler handler;
+    SwipeRefreshLayout refreshLayout;
     //LinearLayout linearLayout;
 
 
     @Override
     protected void onStart() {
         super.onStart();
-
+        startService(new Intent(this, MyService.class));
     }
 
     @Override
@@ -68,6 +71,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         send = findViewById(R.id.send);
         toDoList = findViewById(R.id.displayTask);
         spinner = findViewById(R.id.category);
+        refreshLayout = findViewById(R.id.swiperefresh);
         allList = new ArrayList<>();
         //linearLayout = findViewById(R.id.empty);
 
@@ -75,9 +79,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         setSupportActionBar(toolbar);
         toolbar.showOverflowMenu();
 
+        categoryList = new ArrayList<>();
+        categoryList.add("Select");
+        categoryList.add("Add New Category");
+
+        ArrayAdapter<String> category = new ArrayAdapter<String>(MainActivity.this,
+                R.layout.spinner_text_view, categoryList);
+        spinner.setAdapter(category);
+        spinner.setOnItemSelectedListener(this);
+
         handler = new Handler();
         handler.postAtFrontOfQueue(()-> {
-            startService(new Intent(MainActivity.this, MyService.class));
             List<String>ls = s.getCategory();
             categoryList.clear();
             categoryList.add("Select");
@@ -98,14 +110,20 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
                     setRecyclerAdapter(MainActivity.this,allList,this);
                 }
             });
-        categoryList = new ArrayList<>();
-        categoryList.add("Select");
-        categoryList.add("Add New Category");
 
-       ArrayAdapter<String> category = new ArrayAdapter<String>(MainActivity.this,
-                R.layout.spinner_text_view, categoryList);
-        spinner.setAdapter(category);
-        spinner.setOnItemSelectedListener(this);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if(!category_name.equals("Select")){
+                    String tablename = s.getTableName(category_name);
+                    allList = s.getAllTasks(tablename);
+                    setRecyclerAdapter(MainActivity.this, allList,MainActivity.this::onClick);
+                    refreshLayout.setRefreshing(false);
+                }
+                refreshLayout.setRefreshing(false);
+            }
+        });
+
     }
 
     @Override

@@ -133,15 +133,18 @@ public class Sql extends SQLiteOpenHelper {
         }
     }
 
-    public void updateTask(String catagoryName, String task) {
+    public int updateTask(String catagoryName, String Task, String update_Task) {
         db = this.getWritableDatabase();
         cv = new ContentValues();
-        cv.put(COLUMN.Task.toString(), task);
-        int l = db.update(catagoryName, cv, null, null);
+        cv.put(COLUMN.Task.toString(), update_Task);
+        String whereClause = COLUMN.Task.toString() + "=?";
+        String[] whereArgs = {Task};
+        int l = db.update(catagoryName, cv, whereClause, whereArgs);
         if (l != 0)
             new AlertOrToast(context).showAlert("Success", "Value updated");
         else
-            new AlertOrToast(context).showAlert("Error", "Error Occured");
+            new AlertOrToast(context).showAlert("Error", "Error Occured"+l);
+        return l;
     }
 
     public boolean check_duplicate_Table(String tableName) {
