@@ -1,4 +1,4 @@
-package com.myapp.reminderapp.userTask;
+  package com.myapp.reminderapp.userTask;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,6 +7,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.AlarmManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,15 +29,14 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.Services.MyService;
 import com.myapp.reminderapp.alertORToast.AlertOrToast;
-import com.myapp.reminderapp.sql.sql;
+import com.myapp.reminderapp.sql.Sql;
+
+import org.json.JSONException;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements RecyclerAdapter.OnTaskListener, AdapterView.OnItemSelectedListener {
 
@@ -47,10 +48,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     static String category_name;
     static RecyclerAdapter recyclerAdapter;
     List<String> categoryList;
-    sql s = new sql(this);
+    Sql s = new Sql(this);
     static int positions;
     Handler handler;
-    static List<String> Tasks;
+    //LinearLayout linearLayout;
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         toDoList = findViewById(R.id.displayTask);
         spinner = findViewById(R.id.category);
         allList = new ArrayList<>();
+        //linearLayout = findViewById(R.id.empty);
 
         Toolbar toolbar = findViewById(R.id.custom_menu_toolBar);
         setSupportActionBar(toolbar);
@@ -68,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
 
         handler = new Handler();
         handler.postAtFrontOfQueue(()-> {
+            startService(new Intent(MainActivity.this, MyService.class));
             List<String>ls = s.getCategory();
             categoryList.clear();
             categoryList.add("Select");
@@ -115,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         getMenuInflater().inflate(R.menu.menu_items,menu);
         MenuItem item = menu.findItem(R.id.search);
         SearchView searchView = (SearchView) item.getActionView();
-        searchView.setBackgroundColor(Color.WHITE);
+        searchView.setBackgroundColor(Color.TRANSPARENT);
         searchView.setQueryHint("Search Task Here");
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -127,6 +137,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
             public boolean onQueryTextChange(String newText) {
                 if(!allList.isEmpty())
                     recyclerAdapter.getFilter().filter(newText);
+                /*else
+                    linearLayout.addView(emptyText());*/
                 return true;
             }
         });
@@ -177,9 +189,16 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         }
         else if(!category_name.equals("Select")){
             String tablename = s.getTableName(category_name);
+            try{
+                s.getAllDatas(tablename);
+            }catch (JSONException j){
+                new AlertOrToast(this).showAlert("Error",j.getMessage());
+            }
             allList = s.getAllTasks(tablename);
             setRecyclerAdapter(MainActivity.this, allList,this);
         }
+        else
+            allList.clear();
     }
 
     @Override
@@ -194,8 +213,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         return et;
     }
 
-    public TextView emptyText(Context context){
-        TextView tv = new TextView(context);
+    public TextView emptyText(){
+        TextView tv = new TextView(MainActivity.this);
         tv.setText("No Results");
         tv.setTypeface(null,Typeface.BOLD);
         tv.setTextColor(Color.WHITE);

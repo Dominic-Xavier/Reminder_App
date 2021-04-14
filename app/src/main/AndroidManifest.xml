@@ -17,6 +17,13 @@
             </intent-filter>
         </activity>
         <activity android:name = ".userTask.UserTasks"/>
+        <!--<receiver android:name=".Services.MyAlarm"
+            android:enabled="true"
+            android:exported="true"/>
+        <service android:name=".Services.MyService"
+            android:process="@string/app_name"
+            android:icon="@drawable/tick_icon"
+            android:label="@string/app_name"/>-->
     </application>
 
 </manifest>

@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name">Reminder App</string>
-    <string-array name="category">
-        <item>Default</item>
-        <item>Finished</item>
+    <string-array name="Repeat_Array">
+        <item>No Repeat</item>
+        <item>Every 1 Min</item>
+        <item>Every 5 Min</item>
+        <item>Every Min</item>
+        <item>Every Hour</item>
+        <item>Every Day</item>
     </string-array>
     <string name="search_hint">Search Tasks</string>
 </resources>

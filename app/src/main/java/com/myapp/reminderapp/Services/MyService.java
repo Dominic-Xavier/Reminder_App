@@ -1,36 +1,78 @@
 package com.myapp.reminderapp.Services;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.IBinder;
+
+import com.myapp.reminderapp.alertORToast.AlertOrToast;
+import com.myapp.reminderapp.sql.Sql;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.Calendar;
+import java.util.Set;
 
 import androidx.annotation.Nullable;
 
 public class MyService extends Service {
-    /**
-     * Return the communication channel to the service.  May return null if
-     * clients can not bind to the service.  The returned
-     * {@link IBinder} is usually for a complex interface
-     * that has been <a href="{@docRoot}guide/components/aidl.html">described using
-     * aidl</a>.
-     *
-     * <p><em>Note that unlike other application components, calls on to the
-     * IBinder interface returned here may not happen on the main thread
-     * of the process</em>.  More information about the main thread can be found in
-     * <a href="{@docRoot}guide/topics/fundamentals/processes-and-threads.html">Processes and
-     * Threads</a>.</p>
-     *
-     * @param intent The Intent that was used to bind to this service,
-     *               as given to {@link Context#bindService
-     *               Context.bindService}.  Note that any extras that were included with
-     *               the Intent at that point will <em>not</em> be seen here.
-     * @return Return an IBinder through which clients can call on to the
-     * service.
-     */
+
+    Sql s = new Sql(this);
+
+    class IBindService extends Binder {
+        public MyService getService() {
+            return MyService.this;
+        }
+    }
+
+    private IBinder binder = new IBindService();
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
     }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        new Thread(()-> {
+            JSONObject js=null;
+            JSONArray jsonArray = new JSONArray();
+            try {
+                Set<String> ids = s.getAllIds();
+                for (String id:ids) {
+                    js = s.getAllDatas(id);
+                    jsonArray.put(js);
+                }
+                System.out.println("Json Array is:"+jsonArray);
+            } catch (JSONException j) {
+                j.printStackTrace();
+            }
+            catch (Exception e){
+                System.out.println("Error Happened"+e.getMessage());
+            }
+        }).start();
+        return START_STICKY;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
+
+    private void setAlarm(int year, int month, int date, int hour, int min){
+        Calendar milliSeconds = Calendar.getInstance();
+        milliSeconds.setTimeInMillis(System.currentTimeMillis());
+        milliSeconds.set(year,month,date,hour,min);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(this, MyAlarm.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,0,intent,0);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,milliSeconds.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES,pendingIntent);
+    }
+
+
 }
