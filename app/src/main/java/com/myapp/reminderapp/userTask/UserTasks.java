@@ -61,10 +61,10 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
         update_Task.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String id = s.getTableName(categoryName);
+                String tableid = s.getTableName(categoryName);
                 String updateTask = taskName.getText().toString();
                 String taskNames = task_name.getText().toString();
-                int save = s.updateTask(id,taskNames,updateTask);
+                int save = s.updateTask(tableid,taskNames,updateTask);
                 if(save>0){
                     task_name.setText(updateTask);
                     taskName.setText("");
@@ -104,20 +104,11 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
             String remind_time = time.getText().toString();
             if(remind_date.isEmpty() || remind_time.isEmpty())
                 Toast.makeText(this,"Please fill date and time",Toast.LENGTH_SHORT).show();
-            else{
-                String Task = task_name.getText().toString();
+            else {
                 String dateRemind = date.getText().toString();
                 String timeRemind = time.getText().toString();
-                String [] splitDate = dateRemind.split("/");
-                String [] splitTime = remind_time.split(":");
-                String month = splitDate[0];
-                String date = splitDate[1];
-                String year = splitDate[2];
-                String hour = splitTime[0];
-                String min = splitTime[1];
-
                 String tableName = s.getTableName(categoryName);
-                s.updateData(tableName,Task,dateRemind,timeRemind);
+                s.updateData(tableName,tasks,dateRemind,timeRemind);
             }
         });
     }
@@ -155,7 +146,6 @@ public class UserTasks extends AppCompatActivity implements DatePickerDialog.OnD
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         repeat = ""+parent.getItemAtPosition(position);
-        //Do the action accordingly
     }
 
     /**

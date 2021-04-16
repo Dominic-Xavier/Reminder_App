@@ -1,4 +1,4 @@
-  package com.myapp.reminderapp.sql;
+package com.myapp.reminderapp.sql;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.myapp.reminderapp.alertORToast.AlertOrToast;
+import com.myapp.reminderapp.sql.COLUMN;
 import com.myapp.reminderapp.userTask.MainActivity;
 
 import org.json.JSONArray;
@@ -28,34 +29,18 @@ import java.util.Set;
 import androidx.annotation.Nullable;
 
 public class Sql extends SQLiteOpenHelper {
-    public static SQLiteDatabase db;
+    private static SQLiteDatabase db;
     Context context;
     ContentValues cv;
     static Cursor cursor, cursors;
     static Map<String, Set<String>> map;
+    static Map<String, String> maps;
     JSONObject jsonObject;
     JSONArray jsonArray;
 
     public Sql(@Nullable Context context) {
         super(context, "category.db", null, 1);
         this.context = context;
-    }
-
-    /**
-     * Create a helper object to create, open, and/or manage a database.
-     * This method always returns very quickly.  The database is not actually
-     * created or opened until one of {@link #getWritableDatabase} or
-     * {@link #getReadableDatabase} is called.
-     *
-     * @param context to use for locating paths to the the database
-     * @param name    of the database file, or null for an in-memory database
-     * @param factory to use for creating cursor objects, or null for the default
-     * @param version number of the database (starting at 1); if the database is older,
-     *                {@link #onUpgrade} will be used to upgrade the database; if the database is
-     *                newer, {@link #onDowngrade} will be used to downgrade the database
-     */
-    public Sql(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
-        super(context, name, factory, version);
     }
 
     @Override
@@ -72,8 +57,8 @@ public class Sql extends SQLiteOpenHelper {
         cv.put(COLUMN.Category_Name.toString(), COLUMN.Finished.toString());
         long value = db.insert(COLUMN.Category.toString(), null, cv);
         if(value!=-1 && values!=-1){
-            db.execSQL("create table u_id_1" + " (" + COLUMN.Task.toString() + " text," + COLUMN.Date.toString() + " text," + COLUMN.Time.toString() + " text)");
-            db.execSQL("create table u_id_2" + " (" + COLUMN.Task.toString() + " text," + COLUMN.Date.toString() + " text," + COLUMN.Time.toString() + " text)");
+            db.execSQL("create table u_id_1" + " (" + COLUMN.Task.toString()+" text," + COLUMN.Date.toString() + " text," + COLUMN.Time.toString() + " text)");
+            db.execSQL("create table u_id_2" + " (" + COLUMN.Task.toString()+" text," + COLUMN.Date.toString() + " text," + COLUMN.Time.toString() + " text)");
         }
     }
 
@@ -93,7 +78,7 @@ public class Sql extends SQLiteOpenHelper {
             long save = db.insert(COLUMN.Category.toString(), null, cv);
             if (save != -1) {
                 new AlertOrToast(context).showAlert("Success", "Category is added into database");
-                db.execSQL("create table "+ID_NUMBER+" (" + COLUMN.Task.toString() + " text," + COLUMN.Date.toString() + " text," + COLUMN.Time.toString() + " text)");
+                db.execSQL("create table "+ID_NUMBER+" (" + COLUMN.id.toString() + " INTEGER PRIMARY KEY AUTOINCREMENT,"+ COLUMN.Task.toString() + " text," + COLUMN.Date.toString() + " text," + COLUMN.Time.toString() + " text)");
             } else
                 new AlertOrToast(context).showAlert("Faled", "Category is not added into database");
         } else
@@ -101,50 +86,118 @@ public class Sql extends SQLiteOpenHelper {
         return getCategory();
     }
 
-    public void addData(String categoryName, String Task) {
+    public boolean addData(String categoryName, String Task) {
         long save;
+        boolean duplicateTask = false;
         //here categoryName is table name
-        db = this.getWritableDatabase();
-        cv = new ContentValues();
-        cv.put(COLUMN.Task.toString(), Task);
-        save = db.insert(categoryName, null, cv);
-        if (save == -1)
-            new AlertOrToast(context).showAlert("Failed", "Error Occured");
-        else
-            new AlertOrToast(context).toastMessage("Values entered successfully...!");
-    }
-
-    public void updateData(String tableName, String Task, String date, String time) {
-        //here categoryName is table name
-        db = this.getWritableDatabase();
-        cv = new ContentValues();
-        cv.put(COLUMN.Date.toString(), date);
-        cv.put(COLUMN.Time.toString(), time);
-        String where = COLUMN.Task.toString() + "=?";
-        String[] whereArgs = {Task};
-        try {
-            int update = db.update(tableName,cv,where,whereArgs);
-            if(update!=0)
-                new AlertOrToast(context).showAlert("Success","Values Updated successfully");
-            else
-                new AlertOrToast(context).showAlert("Error","Values did not updated");
-        }catch (Exception e){
-            new AlertOrToast(context).showAlert("Error",""+e.getMessage());
+        if(checkDuplicateTask(categoryName,Task)){
+            db = this.getWritableDatabase();
+            cv = new ContentValues();
+            cv.put(COLUMN.Task.toString(), Task);
+            save = db.insert(categoryName, null, cv);
+            if (save == -1)
+                new AlertOrToast(context).showAlert("Failed", "Error Occured");
+            else{
+                duplicateTask = true;
+                new AlertOrToast(context).toastMessage("Values entered successfully...!");
+            }
         }
+        else{
+            duplicateTask = false;
+            new AlertOrToast(context).toastMessage("This task Exists already");
+        }
+        return duplicateTask;
     }
 
-    public int updateTask(String catagoryName, String Task, String update_Task) {
+    public void updateData(String tableName, String task, String date, String time) {
+        //here categoryName is table name
         db = this.getWritableDatabase();
         cv = new ContentValues();
-        cv.put(COLUMN.Task.toString(), update_Task);
-        String whereClause = COLUMN.Task.toString() + "=?";
-        String[] whereArgs = {Task};
-        int l = db.update(catagoryName, cv, whereClause, whereArgs);
-        if (l != 0)
-            new AlertOrToast(context).showAlert("Success", "Value updated");
+
+            cv.put(COLUMN.Date.toString(), date);
+            cv.put(COLUMN.Time.toString(), time);
+            String where = COLUMN.Task.toString() + "=?";
+            String[] whereArgs = {task};
+            try {
+                int update = db.update(tableName,cv,where,whereArgs);
+                if(update!=0)
+                    new AlertOrToast(context).showAlert("Success","Values Updated successfully");
+                else
+                    new AlertOrToast(context).showAlert("Error","Values did not updated");
+            }catch (Exception e){
+                new AlertOrToast(context).showAlert("Error",""+e.getMessage());
+            }
+    }
+
+    public int updateTask(String catagoryName, String task, String update_Task) {
+        int l = 0;
+        if(checkDuplicateTask(catagoryName,update_Task)){
+            db = this.getWritableDatabase();
+            cv = new ContentValues();
+            cv.put(COLUMN.Task.toString(), update_Task);
+            String whereClause = COLUMN.Task.toString() + "=?";
+            String[] whereArgs = {task};
+            l = db.update(catagoryName, cv, whereClause, whereArgs);
+            if (l != 0)
+                new AlertOrToast(context).showAlert("Success", "Value updated");
+            else
+                new AlertOrToast(context).showAlert("Error", "Error Occured"+l);
+        }
         else
-            new AlertOrToast(context).showAlert("Error", "Error Occured"+l);
+            new AlertOrToast(context).toastMessage("This Task Exists Already....!");
         return l;
+    }
+
+    public void deleteRow(String tableName, String task){
+        System.out.println("TableName and task is:"+tableName+" "+task);
+        db = this.getWritableDatabase();
+        cv = new ContentValues();
+        Map<String, String> map = getRowDetails(tableName, task);
+        String getTask = map.get("Tasks");
+        String date = map.get("Dates");
+        String time = map.get("Times");
+        System.out.println("Map object for delete Row is:"+map);
+        String whereClause = COLUMN.Task.toString()+"=?";
+        String selectionArgs[] = {task};
+        int deleteRow = db.delete(tableName,whereClause,selectionArgs);
+
+        if(deleteRow>0)
+            new AlertOrToast(context).toastMessage("Task Deleted");
+         else
+            new AlertOrToast(context).toastMessage("Unable to delete the task");
+             System.out.println("Tasks are:"+getTask);
+             cv.put(COLUMN.Task.toString(), getTask);
+             cv.put(COLUMN.Date.toString(), date);
+             cv.put(COLUMN.Time.toString(), time);
+             long save = db.insert("u_id_2",null,cv);
+
+             if(save!=-1)
+                 new AlertOrToast(context).showAlert("Success","Value inserted into finished category");
+             else
+                 new AlertOrToast(context).showAlert("Error", "Value is not inserted into finished Database");
+
+    }
+
+    public Map<String, String> getRowDetails(String tableNames, String getTask){
+        db = this.getReadableDatabase();
+        maps = new LinkedHashMap<>();
+        String task,Date,Time;
+        cursor = db.rawQuery("select * from "+tableNames+" where "+COLUMN.Task.toString()+"='"+getTask+"'",null);
+        while (cursor.moveToNext()){
+            task = cursor.getString(0);
+            Date = cursor.getString(1);
+            Time = cursor.getString(2);
+            maps.put("Tasks",task);
+            if(Date!=null || Time!=null){
+                maps.put("Dates",Date);
+                maps.put("Times",Time);
+            }
+            else {
+                maps.put("Dates","0");
+                maps.put("Times","0");
+            }
+        }
+        return maps;
     }
 
     public boolean check_duplicate_Table(String tableName) {
@@ -266,5 +319,26 @@ public class Sql extends SQLiteOpenHelper {
         jsonObject.put(table_Name,jsonArray);
         System.out.println("JSONObject is:"+jsonObject);
         return jsonObject;
+    }
+
+    public boolean checkDuplicateTask(String tableName, String task){
+        boolean checkDuplicate;
+        int count = 0;
+        db = this.getReadableDatabase();
+        String cuurentTask;
+        cursor = db.query(tableName,new String[]{COLUMN.Task.toString()},null,null,null,null,null);
+        while (cursor.moveToNext()){
+            cuurentTask = cursor.getString(0);
+            if(cuurentTask.equals(task)){
+                count++;
+                break;
+            }
+        }
+        if(count>0)
+            checkDuplicate = false;
+        else
+            checkDuplicate = true;
+        return checkDuplicate;
+        //return count>0? false : true;
     }
 }

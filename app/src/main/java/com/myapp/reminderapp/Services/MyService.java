@@ -85,7 +85,8 @@ public class MyService extends Service {
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,milliSeconds.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES,pendingIntent);
     }
 
-    public void decodeJsonArray(JSONArray jsonArray){
-        
+    public JSONArray decodeJsonArray(JSONArray jsonArray){
+
+        return null;
     }
 }

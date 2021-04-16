@@ -50,12 +50,17 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     static String category_name;
     static RecyclerAdapter recyclerAdapter;
     List<String> categoryList;
-    Sql s = new Sql(this);
     static int positions;
+    Sql s = new Sql(this);
     Handler handler;
     SwipeRefreshLayout refreshLayout;
+
+    static String tablename;
     //LinearLayout linearLayout;
 
+    public static String getTablename() {
+        return tablename;
+    }
 
     @Override
     protected void onStart() {
@@ -80,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         toolbar.showOverflowMenu();
 
         categoryList = new ArrayList<>();
-        categoryList.add("Select");
+        categoryList.add("Select Category");
         categoryList.add("Add New Category");
 
         ArrayAdapter<String> category = new ArrayAdapter<String>(MainActivity.this,
@@ -92,22 +97,24 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         handler.postAtFrontOfQueue(()-> {
             List<String>ls = s.getCategory();
             categoryList.clear();
-            categoryList.add("Select");
+            categoryList.add("Select Category");
             categoryList.add("Add New Category");
             for(String a:ls)
                 categoryList.add(a);
         });
 
-        send.setOnClickListener((View v)-> {
+        send.setOnClickListener((v)-> {
                 String userTask = task.getText().toString();
-                if(userTask.isEmpty() || category_name.equals("Select"))
+                if(userTask.isEmpty() || category_name.equals("Select Category"))
                     new AlertOrToast(this).toastMessage("Task is Empty or Category is not selected...!");
                 else {
                     String tableIdName = s.getTableName(category_name);
-                    s.addData(tableIdName,userTask);
-                    allList.add(userTask);
-                    task.setText("");
-                    setRecyclerAdapter(MainActivity.this,allList,this);
+                    boolean all = s.addData(tableIdName,userTask);
+                    if(all){
+                        allList.add(userTask);
+                        task.setText("");
+                        setRecyclerAdapter(MainActivity.this,allList,this);
+                    }
                 }
             });
 
@@ -132,8 +139,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         String result = allList.get(positions);
         Intent intent = new Intent(this, UserTasks.class);
         intent.putExtra("Task",result);
-        intent.putExtra("indexPosition",positions);
+        intent.putExtra("indexPosition",String.valueOf(positions+1));
         intent.putExtra("CategoryName",getCategory_name());
+
         startActivity(intent);
         new AlertOrToast(this).toastMessage(intent.getStringExtra("Key"));
     }
@@ -189,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
                         String categoryName = editText.getText().toString();
                         List<String>ls = s.addCategory(categoryName);
                         categoryList.clear();
-                        categoryList.add("Select");
+                        categoryList.add("Select Category");
                         categoryList.add("Add New Category");
                         for (String l:ls)
                             categoryList.add(l);
@@ -205,8 +213,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
             al.setCanceledOnTouchOutside(false);
             al.show();
         }
-        else if(!category_name.equals("Select")){
-            String tablename = s.getTableName(category_name);
+
+        else if(!category_name.equals("Select Category")){
+
+            tablename = s.getTableName(category_name);
             try{
                 s.getAllDatas(tablename);
             }catch (JSONException j){

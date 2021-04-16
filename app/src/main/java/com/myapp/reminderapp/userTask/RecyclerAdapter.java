@@ -1,6 +1,8 @@
 package com.myapp.reminderapp.userTask;
 
 import android.content.Context;
+import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.sql.Sql;
+
+import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +28,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
     Context context;
     List<String> allList;
     List<String> allTaskList;
+    Sql s;
 
     private OnTaskListener listener;
     public RecyclerAdapter(Context context, List<String> allList, OnTaskListener listener) {
@@ -30,6 +36,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
         this.allList = allList;
         this.listener = listener;
         allTaskList = new ArrayList<>(allList);
+        s = new Sql(context);
     }
 
     @NonNull
@@ -45,10 +52,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
         holder.task.setText(""+allList.get(position));
         holder.check.setOnClickListener((v)-> {
                 if(holder.check.isChecked()){
+                    s.deleteRow(MainActivity.getTablename(),allList.get(position));
                     allList.remove(position);
                     notifyItemRemoved(position);
                     notifyItemRangeRemoved(position,allList.size());
-                    String sqla = "detete from ";
                 }
         });
     }
