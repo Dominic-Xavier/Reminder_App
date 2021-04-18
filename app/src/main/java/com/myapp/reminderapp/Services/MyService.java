@@ -15,6 +15,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -31,6 +34,8 @@ import androidx.annotation.RequiresApi;
 public class MyService extends Service {
 
     Sql s = new Sql(this);
+
+    Context context;
 
     static JSONArray jsonArray;
 
@@ -68,6 +73,7 @@ public class MyService extends Service {
         super.onCreate();
     }
 
+    //Fetch values according to
     private JSONArray jsonArray(){
         JSONArray jrr = null;
         try {
@@ -91,6 +97,10 @@ public class MyService extends Service {
 
     private JSONArray decodeJsonArray(JSONArray jsonArray) throws JSONException {
         System.out.println("Decodeds Json Array is:"+jsonArray);
+        JSONObject[] jobj = new JSONObject[jsonArray.length()];
+        for (int i=0;i<jobj.length;i++){
+            jobj[i] = jsonArray.getJSONObject(i);
+        }
         List<JSONObject> all = new ArrayList<>();
         //Set<String> ids = s.getAllIds();
         for (int i=0;i<jsonArray.length();i++){
@@ -102,15 +112,19 @@ public class MyService extends Service {
 
         Collections.sort(all, new Comparator<JSONObject>() {
             String ldate, rdate;
+            DateFormat f = new SimpleDateFormat("dd/MM/yy");
+            int all;
             @Override
             public int compare(JSONObject o1, JSONObject o2) {
                 try {
                     ldate = o1.getString("Date");
                     rdate = o2.getString("Date");
-                } catch (JSONException e) {
+                    all = f.parse(ldate).compareTo(f.parse(rdate));
+                    System.out.println("Value of Cpmparator is:"+all);
+                } catch (JSONException | ParseException e) {
                     e.printStackTrace();
                 }
-                return ldate.compareTo(rdate);
+                return all;
             }
         });
 
