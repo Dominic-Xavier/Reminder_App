@@ -93,6 +93,7 @@
         android:id="@+id/text_receive"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
         android:hint="Update Task"
         android:layout_marginRight="50dp"
         app:layout_constraintBottom_toBottomOf="parent"

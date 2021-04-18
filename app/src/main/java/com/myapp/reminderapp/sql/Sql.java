@@ -2,24 +2,18 @@ package com.myapp.reminderapp.sql;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import com.myapp.reminderapp.alertORToast.AlertOrToast;
-import com.myapp.reminderapp.sql.COLUMN;
-import com.myapp.reminderapp.userTask.MainActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -33,10 +27,8 @@ public class Sql extends SQLiteOpenHelper {
     Context context;
     ContentValues cv;
     static Cursor cursor, cursors;
-    static Map<String, Set<String>> map;
     static Map<String, String> maps;
-    JSONObject jsonObject;
-    JSONArray jsonArray;
+    JSONArray jsonArray = new JSONArray();
 
     public Sql(@Nullable Context context) {
         super(context, "category.db", null, 1);
@@ -231,32 +223,31 @@ public class Sql extends SQLiteOpenHelper {
     }
 
     //Want to get all the category as key and all tasks as values
-    public JSONObject allDatas() throws JSONException {
+    public JSONArray allDatas() throws JSONException {
         JSONArray jsonArray = new JSONArray();
-        JSONObject jsonObject = new JSONObject();
-        map = new LinkedHashMap<>();
-        Set<String> add_task = new LinkedHashSet<>();
-        Set<String> add_tasks = new LinkedHashSet<>();
         db = this.getReadableDatabase();
         cursor = db.query(COLUMN.Category.toString(), new String[]{COLUMN.id.toString(), COLUMN.Category_Name.toString()}, null, null, null, null, null);
         while (cursor.moveToNext()) {
             //Here idNumber is TableName
             String idNumber = cursor.getString(0);
-            String categoryName = cursor.getString(1);
-            cursors = db.query(idNumber, new String[]{COLUMN.Task.toString()}, null, null, null, null, null);
-            while (cursors.moveToNext()) {
-                String allTasks = cursors.getString(0);
-                jsonArray.put(allTasks);
-                add_task.add(allTasks);
+            if(!idNumber.equals("u_id_2")){
+                cursors = db.query(idNumber, new String[]{COLUMN.Task.toString(), COLUMN.Date.toString(), COLUMN.Time.toString()}, null, null, null, null, null);
+                while (cursors.moveToNext()) {
+                    String allTasks = cursors.getString(0);
+                    String Date = cursors.getString(1);
+                    String Time = cursors.getString(2);
+                    if(Date!=null && Time!=null){
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("Task",allTasks);
+                        jsonObject.put("Date",Date);
+                        jsonObject.put("Time",Time);
+                        jsonArray.put(jsonObject);
+                    }
+                }
             }
-            jsonObject.put(idNumber,jsonArray);
-            add_tasks.addAll(add_task);
-            add_task.clear();
-            map.put(categoryName, add_tasks);
         }
-        System.out.println("JSON Object is:"+jsonObject);
-        Log.v("JSON Object is:",""+jsonObject);
-        return jsonObject;
+        System.out.println("JSON Object is:"+jsonArray);
+        return jsonArray;
     }
 
     public String idGenerator(){
@@ -299,9 +290,7 @@ public class Sql extends SQLiteOpenHelper {
         return ids;
     }
 
-    public JSONObject getAllDatas(String table_Name) throws JSONException{
-        jsonObject = new JSONObject();
-        jsonArray = new JSONArray();
+    public JSONArray getAllDatas(String table_Name) throws JSONException{
         db = this.getReadableDatabase();
         cursor = db.query(table_Name,new String[]{COLUMN.Task.toString(), COLUMN.Date.toString(), COLUMN.Time.toString()},null,null,null,null,null);
         while (cursor.moveToNext()){
@@ -316,9 +305,8 @@ public class Sql extends SQLiteOpenHelper {
                 jsonArray.put(jsonObject);
             }
         }
-        jsonObject.put(table_Name,jsonArray);
-        System.out.println("JSONObject is:"+jsonObject);
-        return jsonObject;
+        System.out.println("JSONObject is:"+jsonArray);
+        return jsonArray;
     }
 
     public boolean checkDuplicateTask(String tableName, String task){

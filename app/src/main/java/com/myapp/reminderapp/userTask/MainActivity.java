@@ -54,9 +54,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     Sql s = new Sql(this);
     Handler handler;
     SwipeRefreshLayout refreshLayout;
-
     static String tablename;
-    //LinearLayout linearLayout;
 
     public static String getTablename() {
         return tablename;
@@ -121,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if(!category_name.equals("Select")){
+                if(!category_name.equals("Select") && !category_name.equals("Add New Category")){
                     String tablename = s.getTableName(category_name);
                     allList = s.getAllTasks(tablename);
                     setRecyclerAdapter(MainActivity.this, allList,MainActivity.this::onClick);

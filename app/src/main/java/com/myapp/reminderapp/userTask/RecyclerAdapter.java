@@ -122,5 +122,3 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
         void onClick(int position);
     }
 }
-
-
