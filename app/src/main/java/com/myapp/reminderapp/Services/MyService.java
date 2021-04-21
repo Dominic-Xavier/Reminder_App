@@ -21,7 +21,6 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,25 +51,56 @@ public class MyService extends Service {
         return null;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         new Thread(()-> {
-            try {
-                JSONArray jrr = s.allDatas();
-                System.out.println("Jrr array is:"+jrr);
-                JSONArray jrrs = decodeJsonArray(jrr);
-                System.out.println("Decoded Json Array is:"+jrrs);
-            } catch (JSONException e) {
-                System.out.println("Error is:"+e.getMessage());
-                e.printStackTrace();
-            }
+
+                try {
+                    String Date, allTime;
+                    while (true) {
+                        JSONArray jrr = s.allDatas();
+                        JSONArray jrrs = decodeJsonArray(jrr);
+                        System.out.println("Decoded Json Array is:" + jrrs);
+
+                        for (int i = 0; i < jrrs.length(); i++) {
+                            JSONObject jobj = jrrs.getJSONObject(i);
+                            Date = jobj.getString("Date");
+                            allTime = jobj.getString("Time");
+                            String[] dateArr = Date.split("/");
+                            String[] timeArr = allTime.split(":");
+                            String datess = dateArr[0];
+                            String months = dateArr[1];
+                            String years = dateArr[2];
+                            String hours = timeArr[0];
+                            String mins = timeArr[1];
+
+                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
+                            LocalDateTime now = LocalDateTime.now();
+                            String date_And_Time = dtf.format(now);
+                            String[] dateandtime = date_And_Time.split(" ");
+                            String dates = dateandtime[0];
+                            String time = dateandtime[1];
+                            if (dates.compareTo(Date) == 0 && time.compareTo(allTime) == 0) {
+                                System.out.println("My Date and time is:"+Date+" "+allTime);
+                                System.out.println("System Date and time is:"+dates+" "+time);
+                                Calendar milliSeconds = Calendar.getInstance();
+                                milliSeconds.setTimeInMillis(System.currentTimeMillis());
+                                milliSeconds.set(Integer.parseInt(years), Integer.parseInt(months), Integer.parseInt(datess), Integer.parseInt(hours), Integer.parseInt(mins));
+                                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                                Intent intents = new Intent(getApplicationContext(), MyAlarm.class);
+                                PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, 0);
+                                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
+                                Thread.sleep(50000);
+                            }
+                        }
+                        Thread.sleep(5000);
+                    }
+                } catch (JSONException | InterruptedException e) {
+                    e.printStackTrace();
+                }
         }).start();
         return START_STICKY;
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
     }
 
     //Fetch values according to
@@ -96,11 +126,6 @@ public class MyService extends Service {
     }
 
     private JSONArray decodeJsonArray(JSONArray jsonArray) throws JSONException {
-        System.out.println("Decodeds Json Array is:"+jsonArray);
-        JSONObject[] jobj = new JSONObject[jsonArray.length()];
-        for (int i=0;i<jobj.length;i++){
-            jobj[i] = jsonArray.getJSONObject(i);
-        }
         List<JSONObject> all = new ArrayList<>();
         //Set<String> ids = s.getAllIds();
         for (int i=0;i<jsonArray.length();i++){
@@ -111,16 +136,20 @@ public class MyService extends Service {
         }
 
         Collections.sort(all, new Comparator<JSONObject>() {
-            String ldate, rdate;
-            DateFormat f = new SimpleDateFormat("dd/MM/yy");
+            String ldate, rdate, ltime, rtime, combinedDate, CombinedTime;
+            DateFormat f = new SimpleDateFormat("dd/MM/yy HH:mm");
             int all;
             @Override
             public int compare(JSONObject o1, JSONObject o2) {
                 try {
                     ldate = o1.getString("Date");
                     rdate = o2.getString("Date");
-                    all = f.parse(ldate).compareTo(f.parse(rdate));
-                    System.out.println("Value of Cpmparator is:"+all);
+                    ltime = o1.getString("Time");
+                    rtime = o2.getString("Time");
+                    combinedDate = ldate+" "+ltime;
+                    CombinedTime = rdate+" "+rtime;
+                    all = f.parse(combinedDate).compareTo(f.parse(CombinedTime));
+                    //System.out.println("Value of Cpmparator is:"+all);
                 } catch (JSONException | ParseException e) {
                     e.printStackTrace();
                 }
@@ -128,23 +157,7 @@ public class MyService extends Service {
             }
         });
 
+
         return new JSONArray(all);
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void setAlarm(int year, int month, int date, int hour, int min){
-        DateTimeFormatter dtf = null;
-        LocalDateTime now = null;
-        dtf = DateTimeFormatter.ofPattern("MM/dd/YY HH:mm");
-        now = LocalDateTime.now();
-        String dates = dtf.format(now);
-
-        Calendar milliSeconds = Calendar.getInstance();
-        milliSeconds.setTimeInMillis(System.currentTimeMillis());
-        milliSeconds.set(year,month,date,hour,min);
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(this, MyAlarm.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this,0,intent,0);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,milliSeconds.getTimeInMillis(),AlarmManager.INTERVAL_FIFTEEN_MINUTES,pendingIntent);
     }
 }

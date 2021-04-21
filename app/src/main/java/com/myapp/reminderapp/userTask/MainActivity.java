@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     EditText task;
     static RecyclerView toDoList;
     Spinner spinner;
-    List<String> allList ;
+    static List<String> allList ;
     static String category_name;
     static RecyclerAdapter recyclerAdapter;
     List<String> categoryList;
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     @Override
     protected void onStart() {
         super.onStart();
-        startService(new Intent(this, MyService.class));
+        //startService(new Intent(this, MyService.class));
     }
 
     @Override
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
 
         handler = new Handler();
         handler.postAtFrontOfQueue(()-> {
+            startService(new Intent(this, MyService.class));
             List<String>ls = s.getCategory();
             categoryList.clear();
             categoryList.add("Select Category");
@@ -184,6 +186,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         category_name = "" + parent.getItemAtPosition(position);
         setCategory_name(category_name);
         if (category_name.equals("Add New Category")) {
+            allList.clear();
+            setRecyclerAdapter(MainActivity.this, allList,this);
             LinearLayout layout = new LinearLayout(this);
             EditText editText = this.categoryName();
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -213,18 +217,14 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         }
 
         else if(!category_name.equals("Select Category")){
-
             tablename = s.getTableName(category_name);
-            try{
-                s.getAllDatas(tablename);
-            }catch (JSONException j){
-                new AlertOrToast(this).showAlert("Error",j.getMessage());
-            }
             allList = s.getAllTasks(tablename);
             setRecyclerAdapter(MainActivity.this, allList,this);
         }
-        else
+        else{
             allList.clear();
+            setRecyclerAdapter(MainActivity.this, allList,this);
+        }
     }
 
     @Override

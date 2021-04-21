@@ -228,6 +228,9 @@ public class Sql extends SQLiteOpenHelper {
         db = this.getReadableDatabase();
         cursor = db.query(COLUMN.Category.toString(), new String[]{COLUMN.id.toString(), COLUMN.Category_Name.toString()}, null, null, null, null, null);
         while (cursor.moveToNext()) {
+            if(cursor.isAfterLast()){
+                break;
+            }
             //Here idNumber is TableName
             String idNumber = cursor.getString(0);
             if(!idNumber.equals("u_id_2")){
@@ -236,13 +239,15 @@ public class Sql extends SQLiteOpenHelper {
                     String allTasks = cursors.getString(0);
                     String Date = cursors.getString(1);
                     String Time = cursors.getString(2);
-                    if(Date!=null && Time!=null){
+                    if(Date!=null && Time!=null && !cursors.isAfterLast()) {
                         JSONObject jsonObject = new JSONObject();
                         jsonObject.put("Task",allTasks);
                         jsonObject.put("Date",Date);
                         jsonObject.put("Time",Time);
                         jsonArray.put(jsonObject);
-                    }
+                        System.out.println("Cursor index is:"+cursor.getCount());
+                        System.out.println("Cursors index is"+cursors.getCount());
+                        }
                 }
             }
         }
@@ -290,7 +295,7 @@ public class Sql extends SQLiteOpenHelper {
         return ids;
     }
 
-    public JSONArray getAllDatas(String table_Name) throws JSONException{
+    public synchronized JSONArray getAllDatas(String table_Name) throws JSONException{
         db = this.getReadableDatabase();
         cursor = db.query(table_Name,new String[]{COLUMN.Task.toString(), COLUMN.Date.toString(), COLUMN.Time.toString()},null,null,null,null,null);
         while (cursor.moveToNext()){
