@@ -33,6 +33,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation "androidx.cardview:cardview:1.0.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
+    implementation "androidx.work:work-runtime:2.5.0"
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.testng:testng:6.9.6'
     testImplementation 'junit:junit:4.12'

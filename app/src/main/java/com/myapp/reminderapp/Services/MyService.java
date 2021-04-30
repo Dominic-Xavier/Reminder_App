@@ -1,15 +1,24 @@
 package com.myapp.reminderapp.Services;
 
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.job.JobInfo;
+import android.app.job.JobParameters;
+import android.app.job.JobService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PersistableBundle;
 
+import com.myapp.reminderapp.R;
 import com.myapp.reminderapp.sql.Sql;
+import com.myapp.reminderapp.userTask.MainActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,80 +36,63 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.JobIntentService;
+import androidx.core.app.NotificationCompat;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class MyService extends Service {
 
-    Sql s = new Sql(this);
+    private static final String Chanel_Id ="1";
 
-    Context context;
+    Sql s = new Sql(this);
+    static String tasks;
+    NotificationManager notificationManager;
 
     static JSONArray jsonArray;
-
-    class IBindService extends Binder {
-        public MyService getService() {
-            return MyService.this;
-        }
-    }
-
-    private IBinder binder = new IBindService();
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        new Thread(()-> {
+        createNotificationChannel();
+        Intent intent1 = new Intent(this, MainActivity.class);
+        Intent broadcast = new Intent(this, MyAlarm.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent1, 0);
+        PendingIntent actionIntent = PendingIntent.getBroadcast(this, 0, broadcast, 0);
+        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        Notification notification = new NotificationCompat.Builder(this, Chanel_Id)
+                .setContentTitle("Running")
+                .setContentText("Reminder app is running")
+                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                .setContentIntent(pendingIntent).build();
+        String tasks = getDatas();
 
-                try {
-                    String Date, allTime;
-                    while (true) {
-                        JSONArray jrr = s.allDatas();
-                        JSONArray jrrs = decodeJsonArray(jrr);
-                        System.out.println("Decoded Json Array is:" + jrrs);
+        System.out.println("getDatas tasks is:"+tasks);
 
-                        for (int i = 0; i < jrrs.length(); i++) {
-                            JSONObject jobj = jrrs.getJSONObject(i);
-                            Date = jobj.getString("Date");
-                            allTime = jobj.getString("Time");
-                            String[] dateArr = Date.split("/");
-                            String[] timeArr = allTime.split(":");
-                            String datess = dateArr[0];
-                            String months = dateArr[1];
-                            String years = dateArr[2];
-                            String hours = timeArr[0];
-                            String mins = timeArr[1];
+        Notification notification1 = new NotificationCompat.Builder(this, Chanel_Id)
+                .setContentTitle("Alarm")
+                .setContentText(tasks)
+                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                .addAction(R.mipmap.ic_launcher, "Stop", actionIntent)
+                .setAutoCancel(false)
+                .setContentIntent(pendingIntent).build();
+        notificationManager.notify(5, notification1);
 
-                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
-                            LocalDateTime now = LocalDateTime.now();
-                            String date_And_Time = dtf.format(now);
-                            String[] dateandtime = date_And_Time.split(" ");
-                            String dates = dateandtime[0];
-                            String time = dateandtime[1];
-                            if (dates.compareTo(Date) == 0 && time.compareTo(allTime) == 0) {
-                                System.out.println("My Date and time is:"+Date+" "+allTime);
-                                System.out.println("System Date and time is:"+dates+" "+time);
-                                Calendar milliSeconds = Calendar.getInstance();
-                                milliSeconds.setTimeInMillis(System.currentTimeMillis());
-                                milliSeconds.set(Integer.parseInt(years), Integer.parseInt(months), Integer.parseInt(datess), Integer.parseInt(hours), Integer.parseInt(mins));
-                                AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                                Intent intents = new Intent(getApplicationContext(), MyAlarm.class);
-                                PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, 0);
-                                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
-                                Thread.sleep(50000);
-                            }
-                        }
-                        Thread.sleep(5000);
-                    }
-                } catch (JSONException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-        }).start();
+        startForeground(1, notification);
         return START_STICKY;
+    }
+
+    private void createNotificationChannel(){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                NotificationChannel notificationChannel = new NotificationChannel(Chanel_Id,"Reminder App is running", NotificationManager.IMPORTANCE_DEFAULT);
+
+                NotificationManager notificationManager = getSystemService(NotificationManager.class);
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
     }
 
     //Fetch values according to
@@ -114,7 +106,6 @@ public class MyService extends Service {
                     jrr=new JSONArray(jsonArray);
                 }
             }
-
             System.out.println("Json Array is:"+jrr);
         } catch (JSONException j) {
             j.printStackTrace();
@@ -156,8 +147,63 @@ public class MyService extends Service {
                 return all;
             }
         });
-
-
         return new JSONArray(all);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public String getDatas(){
+        new Thread(()-> {
+            try {
+                String Date, allTime;
+                while (true) {
+                    JSONArray jrr = s.allDatas();
+                    JSONArray jrrs = decodeJsonArray(jrr);
+                    System.out.println("Decoded Json Array is:" + jrrs);
+                    for (int i = 0; i < jrrs.length(); i++) {
+                        JSONObject jobj = jrrs.getJSONObject(i);
+                        tasks = jobj.getString("Task");
+                        Date = jobj.getString("Date");
+                        allTime = jobj.getString("Time");
+                        String[] dateArr = Date.split("/");
+                        String[] timeArr = allTime.split(":");
+                        String datess = dateArr[0];
+                        String months = dateArr[1];
+                        String years = dateArr[2];
+                        String hours = timeArr[0];
+                        String mins = timeArr[1];
+
+                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yy HH:mm");
+                        LocalDateTime now = LocalDateTime.now();
+                        String date_And_Time = dtf.format(now);
+                        String[] dateandtime = date_And_Time.split(" ");
+                        String dates = dateandtime[0];
+                        String time = dateandtime[1];
+                        if (dates.compareTo(Date) == 0 && time.compareTo(allTime) == 0) {
+                            System.out.println("My Date and time is:"+Date+" "+allTime);
+                            System.out.println("System Date and time is:"+dates+" "+time);
+                            Calendar milliSeconds = Calendar.getInstance();
+                            milliSeconds.setTimeInMillis(System.currentTimeMillis());
+                            milliSeconds.set(Integer.parseInt(years), Integer.parseInt(months), Integer.parseInt(datess), Integer.parseInt(hours), Integer.parseInt(mins));
+                            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                            Intent intents = new Intent(getApplicationContext(), MyAlarm.class);
+                            intents.putExtra("Task",tasks);
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, PendingIntent.FLAG_UPDATE_CURRENT);
+                            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
+                            Thread.sleep(50000);
+                        }
+                    }
+                    Thread.sleep(5000);
+                }
+            } catch (JSONException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
+        return tasks;
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 }

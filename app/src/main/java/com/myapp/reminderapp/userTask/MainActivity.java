@@ -1,5 +1,6 @@
   package com.myapp.reminderapp.userTask;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -7,11 +8,16 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import android.app.AlarmManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -32,6 +38,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.myapp.reminderapp.R;
+import com.myapp.reminderapp.Services.MyAlarm;
 import com.myapp.reminderapp.Services.MyService;
 import com.myapp.reminderapp.alertORToast.AlertOrToast;
 import com.myapp.reminderapp.sql.Sql;
@@ -40,8 +47,9 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements RecyclerAdapter.OnTaskListener, AdapterView.OnItemSelectedListener {
+  public class MainActivity extends AppCompatActivity implements RecyclerAdapter.OnTaskListener, AdapterView.OnItemSelectedListener {
 
     ImageButton send;
     EditText task;
@@ -56,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     Handler handler;
     SwipeRefreshLayout refreshLayout;
     static String tablename;
+    Intent serviceIntent;
+    BroadcastReceiver broadcastReceiver;
 
     public static String getTablename() {
         return tablename;
@@ -65,8 +75,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
     protected void onStart() {
         super.onStart();
         //startService(new Intent(this, MyService.class));
+        /*IntentFilter intentFilter = new IntentFilter("android.intent.action.BOOT_COMPLETED");
+        registerReceiver(broadcastReceiver, intentFilter);*/
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,7 +90,10 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
         spinner = findViewById(R.id.category);
         refreshLayout = findViewById(R.id.swiperefresh);
         allList = new ArrayList<>();
+        broadcastReceiver = new MyAlarm();
         //linearLayout = findViewById(R.id.empty);
+
+        serviceIntent = new Intent(getApplicationContext(), MyService.class);
 
         Toolbar toolbar = findViewById(R.id.custom_menu_toolBar);
         setSupportActionBar(toolbar);
@@ -94,7 +110,12 @@ public class MainActivity extends AppCompatActivity implements RecyclerAdapter.O
 
         handler = new Handler();
         handler.postAtFrontOfQueue(()-> {
-            startService(new Intent(this, MyService.class));
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                startForegroundService(serviceIntent);
+            else
+                startService(serviceIntent);
+            IntentFilter intentFilter = new IntentFilter("android.intent.action.BOOT_COMPLETED");
+            registerReceiver(broadcastReceiver, intentFilter);
             List<String>ls = s.getCategory();
             categoryList.clear();
             categoryList.add("Select Category");
