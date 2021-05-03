@@ -48,22 +48,38 @@ import androidx.work.WorkerParameters;
 public class MyService extends Service {
 
     private static final String Chanel_Id ="1";
+    private static boolean servicestarted = true;
 
-    Sql s = new Sql(this);
+    static String getTasks;
     static String tasks;
     NotificationManager notificationManager;
 
     static JSONArray jsonArray;
 
+    Sql s = new Sql(this);
+
+    public static String getGetTasks() {
+        return getTasks;
+    }
+
+    public static void setGetTasks(String getTasks) {
+        MyService.getTasks = getTasks;
+    }
+
+    public static boolean isServicestarted() {
+        return servicestarted;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        servicestarted = false;
         createNotificationChannel();
         Intent intent1 = new Intent(this, MainActivity.class);
         Intent broadcast = new Intent(this, MyAlarm.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent1, 0);
         PendingIntent actionIntent = PendingIntent.getBroadcast(this, 0, broadcast, 0);
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager = getSystemService(NotificationManager.class);
         Notification notification = new NotificationCompat.Builder(this, Chanel_Id)
                 .setContentTitle("Running")
                 .setContentText("Reminder app is running")
@@ -71,17 +87,18 @@ public class MyService extends Service {
                 .setContentIntent(pendingIntent).build();
         String tasks = getDatas();
 
-        System.out.println("getDatas tasks is:"+tasks);
+        System.out.println("getDatas tasks is:"+getGetTasks());
 
-        Notification notification1 = new NotificationCompat.Builder(this, Chanel_Id)
-                .setContentTitle("Alarm")
-                .setContentText(tasks)
-                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
-                .addAction(R.mipmap.ic_launcher, "Stop", actionIntent)
-                .setAutoCancel(false)
-                .setContentIntent(pendingIntent).build();
-        notificationManager.notify(5, notification1);
-
+        if(getGetTasks()!=null){
+            Notification notification1 = new NotificationCompat.Builder(this, Chanel_Id)
+                    .setContentTitle("Alarm")
+                    .setContentText(tasks)
+                    .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                    .addAction(R.mipmap.ic_launcher, "Stop", actionIntent)
+                    .setAutoCancel(false)
+                    .setContentIntent(pendingIntent).build();
+            notificationManager.notify(5, notification1);
+        }
         startForeground(1, notification);
         return START_STICKY;
     }
@@ -116,20 +133,18 @@ public class MyService extends Service {
         return jrr;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private JSONArray decodeJsonArray(JSONArray jsonArray) throws JSONException {
         List<JSONObject> all = new ArrayList<>();
         //Set<String> ids = s.getAllIds();
         for (int i=0;i<jsonArray.length();i++){
             all.add(jsonArray.getJSONObject(i));
-            JSONObject obj = jsonArray.getJSONObject(i);
-            String date = obj.getString("Date");
-            System.out.println("Jobj is:"+date);
         }
 
         Collections.sort(all, new Comparator<JSONObject>() {
             String ldate, rdate, ltime, rtime, combinedDate, CombinedTime;
             DateFormat f = new SimpleDateFormat("dd/MM/yy HH:mm");
-            int all;
+            int sorted;
             @Override
             public int compare(JSONObject o1, JSONObject o2) {
                 try {
@@ -139,14 +154,24 @@ public class MyService extends Service {
                     rtime = o2.getString("Time");
                     combinedDate = ldate+" "+ltime;
                     CombinedTime = rdate+" "+rtime;
-                    all = f.parse(combinedDate).compareTo(f.parse(CombinedTime));
+                    sorted = f.parse(combinedDate).compareTo(f.parse(CombinedTime));
                     //System.out.println("Value of Cpmparator is:"+all);
                 } catch (JSONException | ParseException e) {
                     e.printStackTrace();
                 }
-                return all;
+                return sorted;
             }
         });
+
+        for (int i=0;i<all.size();i++){
+            JSONObject jobj = all.get(i);
+            String userDate = jobj.getString("Date");
+            String current_Date = currentDate();
+            System.out.println("Current Date is:"+current_Date+" "+userDate);
+            System.out.println("Coparing Dates:"+current_Date.compareTo(userDate));
+            if (current_Date.compareTo(userDate)==-2)
+                all.remove(i);
+        }
         return new JSONArray(all);
     }
 
@@ -187,9 +212,15 @@ public class MyService extends Service {
                             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                             Intent intents = new Intent(getApplicationContext(), MyAlarm.class);
                             intents.putExtra("Task",tasks);
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, PendingIntent.FLAG_UPDATE_CURRENT);
+                            System.out.println("My Tasks:"+tasks);
+                            setGetTasks(tasks);
+
+                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, 0);
+
                             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
+                            PendingIntent calcelAlarm = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, PendingIntent.FLAG_UPDATE_CURRENT);
                             Thread.sleep(50000);
+                            alarmManager.cancel(calcelAlarm);
                         }
                     }
                     Thread.sleep(5000);
@@ -199,6 +230,14 @@ public class MyService extends Service {
             }
         }).start();
         return tasks;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private String currentDate(){
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yy");
+        LocalDateTime now = LocalDateTime.now();
+        String current_Date = dtf.format(now);
+        return current_Date;
     }
 
     @Nullable

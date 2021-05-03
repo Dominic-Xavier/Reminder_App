@@ -1,4 +1,4 @@
-  package com.myapp.reminderapp.userTask;
+   package com.myapp.reminderapp.userTask;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
@@ -110,12 +110,20 @@ import java.util.concurrent.TimeUnit;
 
         handler = new Handler();
         handler.postAtFrontOfQueue(()-> {
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                startForegroundService(serviceIntent);
-            else
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                if(MyService.isServicestarted()){
+                    System.out.println("Service is started:"+MyService.isServicestarted());
+                    startForegroundService(serviceIntent);
+                }
+                else {
+                    System.err.println("Service is already running");
+                }
+            }
+            else{
+                System.out.println("Service2 is started:"+MyService.isServicestarted());
                 startService(serviceIntent);
-            IntentFilter intentFilter = new IntentFilter("android.intent.action.BOOT_COMPLETED");
-            registerReceiver(broadcastReceiver, intentFilter);
+            }
+
             List<String>ls = s.getCategory();
             categoryList.clear();
             categoryList.add("Select Category");

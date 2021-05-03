@@ -228,9 +228,6 @@ public class Sql extends SQLiteOpenHelper {
         db = this.getReadableDatabase();
         cursor = db.query(COLUMN.Category.toString(), new String[]{COLUMN.id.toString(), COLUMN.Category_Name.toString()}, null, null, null, null, null);
         while (cursor.moveToNext()) {
-            if(cursor.isAfterLast()){
-                break;
-            }
             //Here idNumber is TableName
             String idNumber = cursor.getString(0);
             if(!idNumber.equals("u_id_2")){
@@ -247,7 +244,7 @@ public class Sql extends SQLiteOpenHelper {
                         jsonArray.put(jsonObject);
                         System.out.println("Cursor index is:"+cursor.getCount());
                         System.out.println("Cursors index is"+cursors.getCount());
-                        }
+                     }
                 }
             }
         }
