@@ -5,6 +5,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -113,7 +114,7 @@ import java.util.concurrent.TimeUnit;
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
                 if(MyService.isServicestarted()){
                     System.out.println("Service is started:"+MyService.isServicestarted());
-                    startForegroundService(serviceIntent);
+                    ContextCompat.startForegroundService(this, serviceIntent);
                 }
                 else {
                     System.err.println("Service is already running");

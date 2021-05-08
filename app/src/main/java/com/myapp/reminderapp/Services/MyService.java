@@ -9,12 +9,15 @@ import android.app.Service;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PersistableBundle;
+import android.provider.SyncStateContract;
 
 import com.myapp.reminderapp.R;
 import com.myapp.reminderapp.sql.Sql;
@@ -39,32 +42,28 @@ import java.util.Set;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.app.JobIntentService;
 import androidx.core.app.NotificationCompat;
+import androidx.work.Constraints;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class MyService extends Service {
 
-    private static final String Chanel_Id ="1";
+    public static final String Chanel_Id ="1";
     private static boolean servicestarted = true;
 
-    static String getTasks;
+    public AlarmManager alarmManager;
+
+    PendingIntent pendingIntent;
+    BroadcastReceiver broadcastReceiver;
     static String tasks;
-    NotificationManager notificationManager;
 
     static JSONArray jsonArray;
 
     Sql s = new Sql(this);
-
-    public static String getGetTasks() {
-        return getTasks;
-    }
-
-    public static void setGetTasks(String getTasks) {
-        MyService.getTasks = getTasks;
-    }
 
     public static boolean isServicestarted() {
         return servicestarted;
@@ -75,30 +74,16 @@ public class MyService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         servicestarted = false;
         createNotificationChannel();
-        Intent intent1 = new Intent(this, MainActivity.class);
-        Intent broadcast = new Intent(this, MyAlarm.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent1, 0);
-        PendingIntent actionIntent = PendingIntent.getBroadcast(this, 0, broadcast, 0);
-        notificationManager = getSystemService(NotificationManager.class);
+
         Notification notification = new NotificationCompat.Builder(this, Chanel_Id)
                 .setContentTitle("Running")
                 .setContentText("Reminder app is running")
-                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
+                .setAutoCancel(false)
                 .setContentIntent(pendingIntent).build();
-        String tasks = getDatas();
+        getDatas();
 
-        System.out.println("getDatas tasks is:"+getGetTasks());
-
-        if(getGetTasks()!=null){
-            Notification notification1 = new NotificationCompat.Builder(this, Chanel_Id)
-                    .setContentTitle("Alarm")
-                    .setContentText(tasks)
-                    .setSmallIcon(android.R.mipmap.sym_def_app_icon)
-                    .addAction(R.mipmap.ic_launcher, "Stop", actionIntent)
-                    .setAutoCancel(false)
-                    .setContentIntent(pendingIntent).build();
-            notificationManager.notify(5, notification1);
-        }
         startForeground(1, notification);
         return START_STICKY;
     }
@@ -106,7 +91,6 @@ public class MyService extends Service {
     private void createNotificationChannel(){
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
                 NotificationChannel notificationChannel = new NotificationChannel(Chanel_Id,"Reminder App is running", NotificationManager.IMPORTANCE_DEFAULT);
-
                 NotificationManager notificationManager = getSystemService(NotificationManager.class);
                 notificationManager.createNotificationChannel(notificationChannel);
             }
@@ -176,7 +160,7 @@ public class MyService extends Service {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public String getDatas(){
+    public void getDatas(){
         new Thread(()-> {
             try {
                 String Date, allTime;
@@ -209,18 +193,30 @@ public class MyService extends Service {
                             Calendar milliSeconds = Calendar.getInstance();
                             milliSeconds.setTimeInMillis(System.currentTimeMillis());
                             milliSeconds.set(Integer.parseInt(years), Integer.parseInt(months), Integer.parseInt(datess), Integer.parseInt(hours), Integer.parseInt(mins));
-                            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                            alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                             Intent intents = new Intent(getApplicationContext(), MyAlarm.class);
                             intents.putExtra("Task",tasks);
+                            intents.setAction("Broadcast");
                             System.out.println("My Tasks:"+tasks);
-                            setGetTasks(tasks);
 
-                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, 0);
+                            pendingIntent = PendingIntent.getBroadcast(this, 0, intents, PendingIntent.FLAG_UPDATE_CURRENT);
 
                             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
-                            PendingIntent calcelAlarm = PendingIntent.getBroadcast(getApplicationContext(), 0, intents, PendingIntent.FLAG_UPDATE_CURRENT);
+
+                            broadcastReceiver = new BroadcastReceiver() {
+                                @Override
+                                public void onReceive(Context context, Intent intent) {
+                                    String actions = intent.getAction();
+                                    System.out.println("Action Received is:"+actions);
+                                    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+                                    alarmManager.cancel(pendingIntent);
+                                }
+                            };
+
+                            registerReceiver(broadcastReceiver, new IntentFilter("Broadcast"));
+
                             Thread.sleep(50000);
-                            alarmManager.cancel(calcelAlarm);
+                            alarmManager.cancel(pendingIntent);
                         }
                     }
                     Thread.sleep(5000);
@@ -229,7 +225,6 @@ public class MyService extends Service {
                 e.printStackTrace();
             }
         }).start();
-        return tasks;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
