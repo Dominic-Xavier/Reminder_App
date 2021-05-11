@@ -33,6 +33,19 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <TextView
+        android:id="@+id/no_results"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:hint="No Results found"
+        android:textSize="20dp"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/swiperefresh"
+        app:layout_constraintEnd_toEndOf="@+id/swiperefresh"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/custom_menu_toolBar"/>
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swiperefresh"
         android:layout_width="wrap_content"
@@ -40,8 +53,7 @@
         app:layout_constraintBottom_toTopOf="@+id/task"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/custom_menu_toolBar"
-        tools:ignore="MissingConstraints">
+        app:layout_constraintTop_toBottomOf="@+id/custom_menu_toolBar">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/displayTask"
@@ -52,8 +64,6 @@
             tools:ignore="MissingConstraints" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-
 
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/task"

@@ -26,15 +26,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewholder> implements Filterable {
     Context context;
-    List<String> allList;
-    List<String> allTaskList;
+    List<String> allList, allTaskList, backupList;
     Sql s;
 
     private OnTaskListener listener;
     public RecyclerAdapter(Context context, List<String> allList, OnTaskListener listener) {
+
         this.context = context;
         this.allList = allList;
         this.listener = listener;
+        backupList = new ArrayList<>(allList);
         allTaskList = new ArrayList<>(allList);
         s = new Sql(context);
     }
@@ -49,14 +50,16 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Viewho
 
     @Override
     public void onBindViewHolder(@NonNull Viewholder holder, int position) {
+        MainActivity.toDoList.setVisibility(View.VISIBLE);
+        MainActivity.noResults.setVisibility(View.GONE);
         holder.task.setText(""+allList.get(position));
         holder.check.setOnClickListener((v)-> {
-                if(holder.check.isChecked()){
-                    s.deleteRow(MainActivity.getTablename(),allList.get(position));
-                    allList.remove(position);
-                    notifyItemRemoved(position);
-                    notifyItemRangeRemoved(position,allList.size());
-                }
+            if(holder.check.isChecked()){
+                s.deleteRow(MainActivity.getTablename(),allList.get(position));
+                allList.remove(position);
+                notifyItemRemoved(position);
+                notifyItemRangeRemoved(position,allList.size());
+            }
         });
     }
 

@@ -55,6 +55,7 @@ import java.util.concurrent.TimeUnit;
     ImageButton send;
     EditText task;
     static RecyclerView toDoList;
+    static TextView noResults;
     Spinner spinner;
     static List<String> allList ;
     static String category_name;
@@ -66,18 +67,9 @@ import java.util.concurrent.TimeUnit;
     SwipeRefreshLayout refreshLayout;
     static String tablename;
     Intent serviceIntent;
-    BroadcastReceiver broadcastReceiver;
 
     public static String getTablename() {
         return tablename;
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        //startService(new Intent(this, MyService.class));
-        /*IntentFilter intentFilter = new IntentFilter("android.intent.action.BOOT_COMPLETED");
-        registerReceiver(broadcastReceiver, intentFilter);*/
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -91,7 +83,7 @@ import java.util.concurrent.TimeUnit;
         spinner = findViewById(R.id.category);
         refreshLayout = findViewById(R.id.swiperefresh);
         allList = new ArrayList<>();
-        broadcastReceiver = new MyAlarm();
+        noResults = findViewById(R.id.no_results);
         //linearLayout = findViewById(R.id.empty);
 
         serviceIntent = new Intent(getApplicationContext(), MyService.class);
@@ -125,7 +117,7 @@ import java.util.concurrent.TimeUnit;
                 startService(serviceIntent);
             }
 
-            List<String>ls = s.getCategory();
+            List<String> ls = s.getCategory();
             categoryList.clear();
             categoryList.add("Select Category");
             categoryList.add("Add New Category");
@@ -154,6 +146,8 @@ import java.util.concurrent.TimeUnit;
                 if(!category_name.equals("Select Category") && !category_name.equals("Add New Category")){
                     String tablename = s.getTableName(category_name);
                     allList = s.getAllTasks(tablename);
+                    toDoList.setVisibility(View.VISIBLE);
+                    noResults.setVisibility(View.GONE);
                     setRecyclerAdapter(MainActivity.this, allList,MainActivity.this::onClick);
                     refreshLayout.setRefreshing(false);
                 }
@@ -193,8 +187,10 @@ import java.util.concurrent.TimeUnit;
             public boolean onQueryTextChange(String newText) {
                 if(!allList.isEmpty())
                     recyclerAdapter.getFilter().filter(newText);
-                /*else
-                    linearLayout.addView(emptyText());*/
+                else{
+                    toDoList.setVisibility(View.GONE);
+                    noResults.setVisibility(View.VISIBLE);
+                }
                 return true;
             }
         });
@@ -216,6 +212,7 @@ import java.util.concurrent.TimeUnit;
         category_name = "" + parent.getItemAtPosition(position);
         setCategory_name(category_name);
         if (category_name.equals("Add New Category")) {
+            noResults.setVisibility(View.GONE);
             allList.clear();
             setRecyclerAdapter(MainActivity.this, allList,this);
             LinearLayout layout = new LinearLayout(this);
@@ -251,6 +248,12 @@ import java.util.concurrent.TimeUnit;
             allList = s.getAllTasks(tablename);
             setRecyclerAdapter(MainActivity.this, allList,this);
         }
+        else if(category_name.equals("Select Category")){
+            allList.clear();
+            toDoList.setVisibility(View.GONE);
+            noResults.setVisibility(View.VISIBLE);
+            noResults.setHint("Select Category");
+        }
         else{
             allList.clear();
             setRecyclerAdapter(MainActivity.this, allList,this);
@@ -269,19 +272,19 @@ import java.util.concurrent.TimeUnit;
         return et;
     }
 
-    public TextView emptyText(){
-        TextView tv = new TextView(MainActivity.this);
-        tv.setText("No Results");
-        tv.setTypeface(null,Typeface.BOLD);
-        tv.setTextColor(Color.WHITE);
-        tv.setTextSize(20);
-        tv.setGravity(Gravity.CENTER);
-        return tv;
-    }
-
     public static void setRecyclerAdapter(Context context, List<String> allTasks, RecyclerAdapter.OnTaskListener listener){
-        recyclerAdapter = new RecyclerAdapter(context,allTasks,listener);
-        toDoList.setAdapter(recyclerAdapter);
-        toDoList.setLayoutManager(new LinearLayoutManager(context));
+        if(allList.isEmpty() && !category_name.equals("Select Category")){
+            toDoList.setVisibility(View.GONE);
+            noResults.setVisibility(View.VISIBLE);
+            noResults.setHint("No Data Available");
+        }
+        else {
+            noResults.setVisibility(View.GONE);
+            toDoList.setVisibility(View.VISIBLE);
+            recyclerAdapter = new RecyclerAdapter(context,allTasks,listener);
+            toDoList.setAdapter(recyclerAdapter);
+            toDoList.setLayoutManager(new LinearLayoutManager(context));
+        }
+
     }
 }

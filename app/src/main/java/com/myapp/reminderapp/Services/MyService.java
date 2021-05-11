@@ -55,10 +55,13 @@ public class MyService extends Service {
     public static final String Chanel_Id ="1";
     private static boolean servicestarted = true;
 
+    Notification notification1;
+    NotificationManager notificationManager;
+    Intent intent1, stop_Alarm;
+
     public AlarmManager alarmManager;
 
-    PendingIntent pendingIntent;
-    BroadcastReceiver broadcastReceiver;
+    PendingIntent pendingIntent, notificationIntent, ararm_Cancel_Intent;
     static String tasks;
 
     static JSONArray jsonArray;
@@ -90,7 +93,7 @@ public class MyService extends Service {
 
     private void createNotificationChannel(){
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                NotificationChannel notificationChannel = new NotificationChannel(Chanel_Id,"Reminder App is running", NotificationManager.IMPORTANCE_DEFAULT);
+                NotificationChannel notificationChannel = new NotificationChannel(Chanel_Id,"Reminder App is running", NotificationManager.IMPORTANCE_HIGH);
                 NotificationManager notificationManager = getSystemService(NotificationManager.class);
                 notificationManager.createNotificationChannel(notificationChannel);
             }
@@ -188,8 +191,6 @@ public class MyService extends Service {
                         String dates = dateandtime[0];
                         String time = dateandtime[1];
                         if (dates.compareTo(Date) == 0 && time.compareTo(allTime) == 0) {
-                            System.out.println("My Date and time is:"+Date+" "+allTime);
-                            System.out.println("System Date and time is:"+dates+" "+time);
                             Calendar milliSeconds = Calendar.getInstance();
                             milliSeconds.setTimeInMillis(System.currentTimeMillis());
                             milliSeconds.set(Integer.parseInt(years), Integer.parseInt(months), Integer.parseInt(datess), Integer.parseInt(hours), Integer.parseInt(mins));
@@ -203,20 +204,26 @@ public class MyService extends Service {
 
                             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
 
-                            broadcastReceiver = new BroadcastReceiver() {
-                                @Override
-                                public void onReceive(Context context, Intent intent) {
-                                    String actions = intent.getAction();
-                                    System.out.println("Action Received is:"+actions);
-                                    PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
-                                    alarmManager.cancel(pendingIntent);
-                                }
-                            };
+                            intent1 = new Intent(this, StopAlarm.class);
+                            intent1.putExtra("Demo", "Intent is passed...!");
+                            notificationIntent = PendingIntent.getBroadcast(this, 0, intent1, 0);
+                            notificationManager = getSystemService(NotificationManager.class);
+                            notification1 = new NotificationCompat.Builder(this, Chanel_Id)
+                                    .setContentTitle("It's Time to do your task")
+                                    .setContentText("Your Task is:-"+tasks)
+                                    .setSmallIcon(android.R.drawable.btn_star)
+                                    .addAction(R.mipmap.ic_launcher, "Stop Alarm", notificationIntent)
+                                    .setAutoCancel(true)
+                                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                                    .setContentIntent(notificationIntent).build();
+                            notificationManager.notify(5, notification1);
 
-                            registerReceiver(broadcastReceiver, new IntentFilter("Broadcast"));
+                            stop_Alarm = new Intent(this, StopAlarm.class);
+
+                            ararm_Cancel_Intent = PendingIntent.getBroadcast(this, 0, stop_Alarm, 0);
 
                             Thread.sleep(50000);
-                            alarmManager.cancel(pendingIntent);
+                            alarmManager.cancel(ararm_Cancel_Intent);
                         }
                     }
                     Thread.sleep(5000);
