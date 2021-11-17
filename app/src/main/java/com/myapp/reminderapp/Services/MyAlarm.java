@@ -14,6 +14,7 @@ public class MyAlarm extends BroadcastReceiver {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onReceive(Context context, Intent intent) {
+        Intent intent1 = new Intent(context, StopAlarm.class);
         mediaSound(context).start();
     }
 

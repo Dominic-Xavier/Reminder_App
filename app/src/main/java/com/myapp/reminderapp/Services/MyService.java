@@ -49,11 +49,13 @@ import androidx.work.Constraints;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+@RequiresApi(api = Build.VERSION_CODES.M)
 public class MyService extends Service {
 
     public static final String Chanel_Id ="1";
     private static boolean servicestarted = true;
+
+    boolean isNotified = false;
 
     Notification notification1;
     NotificationManager notificationManager;
@@ -83,10 +85,11 @@ public class MyService extends Service {
                 .setContentText("Reminder app is running")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_low_battery)
+                .setOngoing(false)
                 .setAutoCancel(false)
                 .setContentIntent(pendingIntent).build();
         getDatas();
-
+        showNotification();
         startForeground(1, notification);
         return START_STICKY;
     }
@@ -163,8 +166,8 @@ public class MyService extends Service {
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
-    public void getDatas(){
-        new Thread(()-> {
+    public synchronized void getDatas(){
+        Thread t1 = new Thread(()-> {
             try {
                 String Date, allTime;
                 while (true) {
@@ -190,6 +193,9 @@ public class MyService extends Service {
                         String[] dateandtime = date_And_Time.split(" ");
                         String dates = dateandtime[0];
                         String time = dateandtime[1];
+                        System.out.println("Time is:"+time);
+
+                        //Checking weather current time matches with user given time
                         if (dates.compareTo(Date) == 0 && time.compareTo(allTime) == 0) {
                             Calendar milliSeconds = Calendar.getInstance();
                             milliSeconds.setTimeInMillis(System.currentTimeMillis());
@@ -204,19 +210,20 @@ public class MyService extends Service {
 
                             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, milliSeconds.getTimeInMillis(), AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
 
-                            intent1 = new Intent(this, StopAlarm.class);
-                            intent1.putExtra("Demo", "Intent is passed...!");
-                            notificationIntent = PendingIntent.getBroadcast(this, 0, intent1, 0);
                             notificationManager = getSystemService(NotificationManager.class);
                             notification1 = new NotificationCompat.Builder(this, Chanel_Id)
                                     .setContentTitle("It's Time to do your task")
-                                    .setContentText("Your Task is:-"+tasks)
+                                    .setContentText("Your Task is:-" + tasks)
                                     .setSmallIcon(android.R.drawable.btn_star)
                                     .addAction(R.mipmap.ic_launcher, "Stop Alarm", notificationIntent)
                                     .setAutoCancel(true)
                                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                                     .setContentIntent(notificationIntent).build();
                             notificationManager.notify(5, notification1);
+
+                            intent1 = new Intent(this, StopAlarm.class);
+                            intent1.putExtra("Demo", "Intent is passed...!");
+                            notificationIntent = PendingIntent.getBroadcast(this, 0, intent1, 0);
 
                             stop_Alarm = new Intent(this, StopAlarm.class);
 
@@ -231,7 +238,8 @@ public class MyService extends Service {
             } catch (JSONException | InterruptedException e) {
                 e.printStackTrace();
             }
-        }).start();
+        });
+        t1.start();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -240,6 +248,14 @@ public class MyService extends Service {
         LocalDateTime now = LocalDateTime.now();
         String current_Date = dtf.format(now);
         return current_Date;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private synchronized void showNotification() {
+        Thread t2 = new Thread(() -> {
+
+        });
+        t2.start();
     }
 
     @Nullable
